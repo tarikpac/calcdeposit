@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Depósito</title>
+    <style>
+        :root {
+            --background-color: #e9ecef;
+            --container-background: #fff;
+            --text-color: #343a40;
+            --label-color: #495057;
+            --input-background: #fff;
+            --input-border: #ced4da;
+            --button-background: #007bff;
+            --button-hover: #0069d9;
+            --result-color: #212529;
+            --error-color: #dc3545;
+        }
+
+        /* Modo Escuro */
+        .dark-mode {
+            --background-color: #121212;
+            --container-background: #1e1e1e;
+            --text-color: #ffffff;
+            --label-color: #e0e0e0;
+            --input-background: #2c2c2c;
+            --input-border: #444;
+            --button-background: #1f6feb;
+            --button-hover: #1558b0;
+            --result-color: #ffffff;
+            --error-color: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 80px auto;
+            background-color: var(--container-background);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-color);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--label-color);
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 16px;
+            color: var(--label-color);
+            background-color: var(--input-background);
+            transition: background-color 0.3s, border 0.3s, color 0.3s;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--button-background);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .result {
+            margin-top: 30px;
+            font-size: 18px;
+            color: var(--result-color);
+        }
+
+        .error {
+            color: var(--error-color);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+            }
+        }
+
+        /* Estilos para o botão de modo escuro */
+        .toggle-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toggle-button {
+            background-color: var(--button-background);
+            border: none;
+            border-radius: 30px;
+            width: 60px;
+            height: 34px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-button::after {
+            content: '🌙'; /* Ícone de lua */
+            font-size: 18px;
+            color: #fff;
+            transition: transform 0.3s;
+        }
+
+        .dark-mode .toggle-button::after {
+            transform: translateX(0);
+        }
+
+        /* Ajuste para o estado claro */
+        .toggle-button.light::after {
+            content: '☀️'; /* Ícone de sol */
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botão de Alternância de Modo -->
+    <div class="toggle-container">
+        <button class="toggle-button" id="theme-toggle" aria-label="Alternar Modo"></button>
+    </div>
+
+    <div class="container">
+        <h2>Calculadora de Depósito</h2>
+        <label for="initialNegativeBalance">Saldo Negativo Inicial:</label>
+        <input type="number" id="initialNegativeBalance" step="any" placeholder="Ex: -1000">
+
+        <label for="targetNegativeBalance">Saldo Negativo Alvo:</label>
+        <input type="number" id="targetNegativeBalance" step="any" placeholder="Ex: 0">
+
+        <label for="payoutPercentage">Percentual de Pagamento (%):</label>
+        <input type="number" id="payoutPercentage" step="any" placeholder="Ex: 80">
+
+        <label for="winningSignals">Número de Sinais Vencedores:</label>
+        <input type="number" id="winningSignals" placeholder="Ex: 5">
+
+        <button onclick="calculateDeposit()">Calcular</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        // Função para alternar o modo
+        const toggleButton = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            toggleButton.classList.remove('light');
+        } else if (currentTheme === 'light') {
+            document.body.classList.remove('dark-mode');
+            toggleButton.classList.add('light');
+        } else {
+            // Se nenhum tema estiver salvo, definir como dark-mode por padrão
+            document.body.classList.add('dark-mode');
+            toggleButton.classList.remove('light');
+            localStorage.setItem('theme', 'dark');
+        }
+
+        toggleButton.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                toggleButton.classList.remove('light');
+            } else {
+                localStorage.setItem('theme', 'light');
+                toggleButton.classList.add('light');
+            }
+        });
+
+        function calculateDeposit() {
+            const initialNegativeBalance = parseFloat(document.getElementById('initialNegativeBalance').value);
+            const targetNegativeBalance = parseFloat(document.getElementById('targetNegativeBalance').value);
+            const payoutPercentage = parseFloat(document.getElementById('payoutPercentage').value);
+            const winningSignals = parseInt(document.getElementById('winningSignals').value);
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            // Validação de entrada
+            if (isNaN(initialNegativeBalance) || isNaN(targetNegativeBalance) || isNaN(payoutPercentage) || isNaN(winningSignals)) {
+                resultDiv.innerHTML = '<p class="error">Por favor, insira valores numéricos válidos em todos os campos.</p>';
+                return;
+            }
+
+            if (winningSignals <= 0) {
+                resultDiv.innerHTML = '<p class="error">O número de sinais vencedores deve ser maior que zero.</p>';
+                return;
+            }
+
+            try {
+                const deposit = calculateDepositToTargetNegativeBalance(
+                    initialNegativeBalance, targetNegativeBalance, payoutPercentage, winningSignals);
+
+                resultDiv.innerHTML = `<p>Para alcançar um saldo de ${targetNegativeBalance} a partir de ${initialNegativeBalance}, com ${winningSignals} sinais vencedores e um pagamento de ${payoutPercentage}%, você precisa depositar aproximadamente <strong>${deposit.toFixed(2)}</strong>.</p>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">${error.message}</p>`;
+            }
+        }
+
+        function calculateDepositToTargetNegativeBalance(initialNegativeBalance, targetNegativeBalance, payout, signals) {
+            const payout_ratio = payout / 100.0;
+
+            const denominator = Math.pow(1 + payout_ratio, signals) - 1;
+            if (denominator === 0) {
+                throw new Error("O denominador no cálculo do depósito é zero.");
+            }
+
+            const deposit = (targetNegativeBalance - initialNegativeBalance) / denominator;
+
+            return deposit;
+        }
+    </script>
+
+</body>
+</html>
